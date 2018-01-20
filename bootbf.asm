@@ -1,8 +1,7 @@
 org     0x7c00
         jmp start
 
-msg_info:   db "Welcome to Brainfuck OS!", 13, 10
-            db "made by chronicle95 in Jan 2018", 13, 10, 13, 10
+msg_info:   db "Brainfuck!", 13, 10
             db "Type 'e' - enter the program", 13, 10
             db "     'r' - run the program", 13, 10, 0
 msg_req:    db 13, 10, "? ", 0
