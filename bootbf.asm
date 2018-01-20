@@ -1,5 +1,5 @@
 org     0x7c00
-        jmp start
+        jmp Lstart
 
 msg_info:   db "Brainfuck!", 13, 10
             db "Type 'e' - enter the program", 13, 10
@@ -9,66 +9,66 @@ msg_error:  db 13, 10, "Bad command", 0
 
 
 ;; Entry point
-start:
-        call    clrscr
+Lstart:
+        call    Lclrscr
         mov     ax, msg_info
-        call    puts
+        call    Lputs
 loop:
         mov     ax, msg_req
-        call    puts 
-        call    getchar
+        call    Lputs
+        call    Lgetchar
         cmp     al, 'e'
         jnz     nextcmd0
         ; edit command
-        call    bf_edit
+        call    Lbf_edit
         jmp     loop
 nextcmd0:
         cmp     al, 'r'
         jnz     nextcmd1
         ; run command
-        call    bf_run
+        call    Lbf_run
         jmp     loop
 nextcmd1:
         cmp     al, 13
         jz      loop
         mov     ax, msg_error
-        call    puts        
+        call    Lputs
         jmp     loop
         hlt
 
 ;; Some I/O functions
 
-getchar:
-        call    getch
-        call    putch
+Lgetchar:
+        call    Lgetch
+        call    Lputch
         ret
 
 
-getch:
+Lgetch:
         mov     ah, 0x00        ; read a key
         int     0x16
         ret
 
 
-putch:
+Lputch:
         mov     ah, 0x0e
         int     0x10
         ret
 
 
-puts:
+Lputs:
         mov     si, ax
 puts_lp:
         lodsb                   ; AL <- [DS:SI] && SI++
         or      al, al          ; end of string?
         jz      puts_ret
-        call    putch
+        call    Lputch
         jmp     puts_lp         ; next char
 puts_ret:
         ret
 
 
-clrscr:
+Lclrscr:
         push    ax
         mov     al, 0x02        ; 80x25
         mov     ah, 0x00        ; set mode and clear screen
@@ -82,28 +82,33 @@ bf_i:       dw 0xA000
 bf_p:       dw 0xB000
 
 
-bf_fetch_cmd:
+Lbf_fetch_cmd:
         mov     bx, cx
         mov     al, [bx]
         ret
 
 
-bf_fetch_data:
+Lbf_fetch_data:
         mov     bx, dx
         mov     al, [bx]
         ret
 
 
-bf_edit:
+Lbf_edit:
         mov     al, 13          ; go to new line
-        call    putch
+        call    Lputch
         mov     al, 10
-        call    putch
+        call    Lputch
         mov     bx, [bf_i]      ; initiate char counter
 bf_elp:
-        call    getchar         ; read key
+        call    Lgetchar         ; read key
         cmp     al, 13          ; if it is enter then quit
         jz      bf_ert
+        cmp     al, 8           ; if backspace then
+        jnz     bf_nbs
+        dec     bx              ; decrement the counter
+        jmp     bf_elp
+bf_nbs:
         mov     [bx], al        ; otherwise write to memory
         inc     bx              ; and increment the counter
         jmp     bf_elp
@@ -112,27 +117,27 @@ bf_ert:
         ret
 
 
-bf_run:
+Lbf_run:
         mov     al, 13          ; go to new line
-        call    putch
+        call    Lputch
         mov     al, 10
-        call    putch
+        call    Lputch
         mov     cx, word [bf_i] ; instruction pointer
         mov     dx, word [bf_p] ; data pointer
         dec     cx
 bf_rlp:
         inc     cx
-        call    bf_fetch_cmd
+        call    Lbf_fetch_cmd
         cmp     al, '+'
         jnz     nextbf0
-        call    bf_fetch_data
+        call    Lbf_fetch_data
         inc     al
         mov     [bx], al
         jmp     bf_rlp
 nextbf0:
         cmp     al, '-'
         jnz     nextbf1
-        call    bf_fetch_data
+        call    Lbf_fetch_data
         dec     al
         mov     [bx], al
         jmp     bf_rlp
@@ -149,20 +154,20 @@ nextbf2:
 nextbf3:        
         cmp     al, '.'
         jnz     nextbf4
-        call    bf_fetch_data
-        call    putch 
+        call    Lbf_fetch_data
+        call    Lputch
         jmp     bf_rlp
 nextbf4:        
         cmp     al, ','
         jnz     nextbf5
         mov     bx, dx
-        call    getchar
+        call    Lgetchar
         mov     [bx], al
         jmp     bf_rlp
 nextbf5:        
         cmp     al, '['
         jnz     nextbf6
-        call    bf_fetch_data
+        call    Lbf_fetch_data
         or      al, al
         jnz     bf_rlp
         push    dx
@@ -171,7 +176,7 @@ lpbgn:
         or      dx, dx
         jz      lpbgn_end
         inc     cx
-        call    bf_fetch_cmd
+        call    Lbf_fetch_cmd
         cmp     al, '['
         jnz     nextlp0
         inc     dx
@@ -187,7 +192,7 @@ lpbgn_end:
 nextbf6:        
         cmp     al, ']'
         jnz     nextbf7
-        call    bf_fetch_data
+        call    Lbf_fetch_data
         or      al, al
         jz      bf_rlp
         push    dx
@@ -196,7 +201,7 @@ lpend:
         or      dx, dx
         jz      lpend_end
         dec     cx
-        call    bf_fetch_cmd
+        call    Lbf_fetch_cmd
         cmp     al, '['
         jnz     nextlp1
         dec     dx
@@ -213,6 +218,7 @@ nextbf7:
         or      al, al
         jnz     bf_rlp
         ret
+
 
 times   510 - ($-$$) db 0
 dw      0xaa55

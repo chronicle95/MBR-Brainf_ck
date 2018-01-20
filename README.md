@@ -13,6 +13,7 @@ In my case to make it work I also needed to set the boot flag using `fdisk`.
 The interpreter itself does supply a bit of help on startup.
 ### Edit
 Press `e` to type in the code. When you are done entering the program, press `Enter` key.
+Use backspace to correct the code.
 If you issue the `e` command again, it will overwrite the previous code.
 ### Execute
 Use `r` to run the program.
