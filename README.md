@@ -1,8 +1,13 @@
 # Build
 You will need NASM to assemble this.
 Run `make build` to get the binary file: bootbf.bin.
+
+# Deploy
 If you have QEMU x86 installed, you can just run `make`.
 It will both assemble and execute the program in VM.
+To install on a physical device, like USB flash drive, you can use dd:
+`# dd if=bootbf.bin of=/dev/sdX bs=512`
+In my case to make it work I also needed to set the boot flag using `fdisk`.
 
 # Usage
 The interpreter itself does supply a bit of help on startup.
