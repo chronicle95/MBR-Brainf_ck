@@ -1,11 +1,11 @@
 org     0x7c00
         jmp Lstart
 
-msg_info:   db "Brainfuck!", 13, 10
-            db "Type 'e' - enter the program", 13, 10
-            db "     'r' - run the program", 13, 10, 0
-msg_req:    db 13, 10, "? ", 0
-msg_error:  db 13, 10, "Bad command", 0
+msg_info:   db "Brainfuck!", 13, 10, 13, 10
+            db " * 'e' - type code in", 13, 10
+            db " * 'r' - run", 13, 10, 0
+msg_req:    db 13, 10, "> ", 0
+msg_error:  db 13, "?", 0
 
 
 ;; Entry point
@@ -70,16 +70,15 @@ puts_ret:
 
 Lclrscr:
         push    ax
-        mov     al, 0x02        ; 80x25
-        mov     ah, 0x00        ; set mode and clear screen
+        mov     ax, 0x0002      ; set mode 80x25 and clear screen
         int     0x10
         pop     ax
         ret
 
 ;; Brainfuck functions
 
-bf_i:       dw 0xA000
-bf_p:       dw 0xB000
+BF_I equ 0x8000
+BF_P equ 0x9000
 
 
 Lbf_fetch_cmd:
@@ -99,9 +98,9 @@ Lbf_edit:
         call    Lputch
         mov     al, 10
         call    Lputch
-        mov     bx, [bf_i]      ; initiate char counter
+        mov     bx, BF_I        ; initiate char counter
 bf_elp:
-        call    Lgetchar         ; read key
+        call    Lgetchar        ; read key
         cmp     al, 13          ; if it is enter then quit
         jz      bf_ert
         cmp     al, 8           ; if backspace then
@@ -122,8 +121,8 @@ Lbf_run:
         call    Lputch
         mov     al, 10
         call    Lputch
-        mov     cx, word [bf_i] ; instruction pointer
-        mov     dx, word [bf_p] ; data pointer
+        mov     cx, BF_I        ; instruction pointer
+        mov     dx, BF_P        ; data pointer
         dec     cx
 bf_rlp:
         inc     cx
