@@ -38,4 +38,4 @@ Memory constraints are: 4K for code and ~28K for program.
 
 The memory may initially contain garbage so keep this in mind when designing BF programs.
 
-At the moment if the program stucks in an infinite loop the only way to break the execution is to reboot the PC.
+Halt the program by pressing `Escape`.

@@ -125,6 +125,15 @@ Lbf_run:
         mov     dx, BF_P        ; data pointer
         dec     cx
 bf_rlp:
+        mov     ah, 0x01        ; get key status
+        int     0x16
+        jz      cont_rlp        ; if no key pressed just continue
+        mov     ah, 0x00        ; read key code
+        int     0x16
+        cmp     al, 27          ; is it escape?
+        jnz     cont_rlp        ; if yes, return back to prompt
+        ret
+cont_rlp:
         inc     cx
         call    Lbf_fetch_cmd
         cmp     al, '+'         ; INCREMENT
