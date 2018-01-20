@@ -127,44 +127,44 @@ Lbf_run:
 bf_rlp:
         inc     cx
         call    Lbf_fetch_cmd
-        cmp     al, '+'
+        cmp     al, '+'         ; INCREMENT
         jnz     nextbf0
         call    Lbf_fetch_data
         inc     al
         mov     [bx], al
         jmp     bf_rlp
 nextbf0:
-        cmp     al, '-'
+        cmp     al, '-'         ; DECREMENT
         jnz     nextbf1
         call    Lbf_fetch_data
         dec     al
         mov     [bx], al
         jmp     bf_rlp
 nextbf1:        
-        cmp     al, '>'
+        cmp     al, '>'         ; NEXT CELL
         jnz     nextbf2
         inc     dx
         jmp     bf_rlp
 nextbf2:        
-        cmp     al, '<'
+        cmp     al, '<'         ; PREVIOUS CELL
         jnz     nextbf3
         dec     dx
         jmp     bf_rlp
 nextbf3:        
-        cmp     al, '.'
+        cmp     al, '.'         ; OUTPUT CHARACTER
         jnz     nextbf4
         call    Lbf_fetch_data
         call    Lputch
         jmp     bf_rlp
 nextbf4:        
-        cmp     al, ','
+        cmp     al, ','         ; INPUT CHARACTER
         jnz     nextbf5
         mov     bx, dx
         call    Lgetchar
         mov     [bx], al
         jmp     bf_rlp
 nextbf5:        
-        cmp     al, '['
+        cmp     al, '['         ; LOOP
         jnz     nextbf6
         call    Lbf_fetch_data
         or      al, al
@@ -189,7 +189,7 @@ lpbgn_end:
         pop     dx
         jmp     bf_rlp
 nextbf6:        
-        cmp     al, ']'
+        cmp     al, ']'         ; END OF LOOP
         jnz     nextbf7
         call    Lbf_fetch_data
         or      al, al
@@ -214,7 +214,7 @@ lpend_end:
         pop     dx
         jmp     bf_rlp
 nextbf7:
-        or      al, al
+        or      al, al          ; stop the program at 0
         jnz     bf_rlp
         ret
 
