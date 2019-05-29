@@ -1,7 +1,7 @@
 org     0x7c00
         jmp Lstart
 
-msg_info:   db "Brainfuck!", 13, 10, 13, 10
+msg_info:   db "Brainf_ck!", 13, 10, 13, 10
             db " * 'e' - type code in", 13, 10
             db " * 'r' - run", 13, 10, 0
 msg_req:    db 13, 10, "> ", 0
