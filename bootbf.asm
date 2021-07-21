@@ -3,6 +3,7 @@ org     0x7c00
 
 msg_info:   db "Brainf_ck!", 13, 10, 13, 10
             db " * e - edit pgm", 13, 10
+            db " * v - view pgm", 13, 10
             db " * x - execute", 13, 10
             db " * r - reset", 13, 10, 0
 msg_req:    db 13, 10, "> ", 0
@@ -26,14 +27,21 @@ loop:
 nextcmd0:
         cmp     al, 'x'
         jnz     nextcmd1
-        ; run command
+        ; execute command
         call    Lbf_run
         jmp     loop
 nextcmd1:
         cmp     al, 'r'
         jnz     nextcmd2
+        ; reset screen command
         jmp     Lstart
 nextcmd2:
+        cmp     al, 'v'
+        jnz     nextcmd3
+        ; view command
+        call    Lbf_view
+        jmp     loop
+nextcmd3:
         cmp     al, 13
         jz      loop
         mov     ax, msg_error
@@ -124,6 +132,20 @@ bf_nbs:
         jmp     bf_elp
 bf_ert:
         mov     byte [bx], 0    ; set last byte to 0
+        ret
+
+
+Lbf_view:
+        call    Lnewline
+        mov     cx, BF_I
+view_loop:
+        call    Lbf_fetch_cmd
+        or      al, al
+        jz      view_end
+        call    Lputch
+        inc     cx
+        jmp     view_loop
+view_end:
         ret
 
 
