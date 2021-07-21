@@ -143,6 +143,7 @@ Lbf_run:
         call    Pnewline
         mov     cx, BF_I        ; instruction pointer
         mov     dx, BF_P        ; data pointer
+        mov     bp, dx          ; secondary data pointer
         dec     cx
 bf_rlp:
         mov     ah, 0x01        ; get key status
@@ -245,6 +246,13 @@ lpend_end:
         pop     dx
         jmp     bf_rlp
 nextbf7:
+        cmp     al, '%'         ; SWAP POINTERS
+        jnz     nextbf8
+        mov     bx, dx          ; use bx as temp
+        mov     dx, bp
+        mov     bp, bx
+        jmp     bf_rlp
+nextbf8:
         or      al, al          ; stop the program at 0
         jnz     bf_rlp
         jmp     Lprompt
