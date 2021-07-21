@@ -253,6 +253,13 @@ nextbf7:
         mov     bp, bx
         jmp     bf_rlp
 nextbf8:
+        cmp     al, '^'         ; COPY TO SECONDARY POINTER
+        jnz     nextbf9
+        mov     bx, dx          ; use bx as temp
+        mov     al, [bx]
+        mov     [bp], al
+        jmp     bf_rlp
+nextbf9:
         or      al, al          ; stop the program at 0
         jnz     bf_rlp
         jmp     Lprompt
