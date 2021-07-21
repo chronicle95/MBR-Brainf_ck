@@ -12,76 +12,66 @@ msg_error:  db 13, "?", 0
 
 ;; Entry point
 Lstart:
-        call    Lclrscr
+        call    Pclrscr
         mov     ax, msg_info
-        call    Lputs
-loop:
+        call    Pputs
+Lprompt:
         mov     ax, msg_req
-        call    Lputs
-        call    Lgetchar
+        call    Pputs
+        call    Pgetchar
+; edit command
         cmp     al, 'e'
-        jnz     nextcmd0
-        ; edit command
-        call    Lbf_edit
-        jmp     loop
-nextcmd0:
-        cmp     al, 'x'
-        jnz     nextcmd1
-        ; execute command
-        call    Lbf_run
-        jmp     loop
-nextcmd1:
-        cmp     al, 'r'
-        jnz     nextcmd2
-        ; reset screen command
-        jmp     Lstart
-nextcmd2:
+        jz      Lbf_edit
+; view command
         cmp     al, 'v'
-        jnz     nextcmd3
-        ; view command
-        call    Lbf_view
-        jmp     loop
-nextcmd3:
+        jz      Lbf_view
+; execute command
+        cmp     al, 'x'
+        jz      Lbf_run
+; reset screen command
+        cmp     al, 'r'
+        jz      Lstart
+; pressing enter does nothing
         cmp     al, 13
-        jz      loop
+        jz      Lprompt
+; handle unknown command
         mov     ax, msg_error
-        call    Lputs
-        jmp     loop
-        hlt
+        call    Pputs
+        jmp     Lprompt
 
 ;; Some I/O functions
 
-Lgetchar:
-        call    Lgetch
-        call    Lputch
+Pgetchar:
+        call    Pgetch
+        call    Pputch
         ret
 
 
-Lgetch:
+Pgetch:
         mov     ah, 0x00        ; read a key
         int     0x16
         ret
 
 
-Lputch:
+Pputch:
         mov     ah, 0x0e
         int     0x10
         ret
 
 
-Lputs:
+Pputs:
         mov     si, ax
 puts_lp:
         lodsb                   ; AL <- [DS:SI] && SI++
         or      al, al          ; end of string?
         jz      puts_ret
-        call    Lputch
+        call    Pputch
         jmp     puts_lp         ; next char
 puts_ret:
         ret
 
 
-Lclrscr:
+Pclrscr:
         push    ax
         mov     ax, 0x0002      ; set mode 80x25 and clear screen
         int     0x10
@@ -89,11 +79,11 @@ Lclrscr:
         ret
 
 
-Lnewline:
+Pnewline:
         mov     al, 13          ; go to new line
-        call    Lputch
+        call    Pputch
         mov     al, 10
-        call    Lputch
+        call    Pputch
         ret
 
 
@@ -103,23 +93,23 @@ BF_I equ 0x8000
 BF_P equ 0x9000
 
 
-Lbf_fetch_cmd:
+Pbf_fetch_cmd:
         mov     bx, cx
         mov     al, [bx]
         ret
 
 
-Lbf_fetch_data:
+Pbf_fetch_data:
         mov     bx, dx
         mov     al, [bx]
         ret
 
 
 Lbf_edit:
-        call    Lnewline
+        call    Pnewline
         mov     bx, BF_I        ; initiate char counter
 bf_elp:
-        call    Lgetchar        ; read key
+        call    Pgetchar        ; read key
         cmp     al, 13          ; if it is enter then quit
         jz      bf_ert
         cmp     al, 8           ; if backspace then
@@ -132,25 +122,25 @@ bf_nbs:
         jmp     bf_elp
 bf_ert:
         mov     byte [bx], 0    ; set last byte to 0
-        ret
+        jmp     Lprompt
 
 
 Lbf_view:
-        call    Lnewline
+        call    Pnewline
         mov     cx, BF_I
 view_loop:
-        call    Lbf_fetch_cmd
+        call    Pbf_fetch_cmd
         or      al, al
         jz      view_end
-        call    Lputch
+        call    Pputch
         inc     cx
         jmp     view_loop
 view_end:
-        ret
+        jmp     Lprompt
 
 
 Lbf_run:
-        call    Lnewline
+        call    Pnewline
         mov     cx, BF_I        ; instruction pointer
         mov     dx, BF_P        ; data pointer
         dec     cx
@@ -162,20 +152,20 @@ bf_rlp:
         int     0x16
         cmp     al, 27          ; is it escape?
         jnz     cont_rlp        ; if yes, return back to prompt
-        ret
+        jmp     Lprompt
 cont_rlp:
         inc     cx
-        call    Lbf_fetch_cmd
+        call    Pbf_fetch_cmd
         cmp     al, '+'         ; INCREMENT
         jnz     nextbf0
-        call    Lbf_fetch_data
+        call    Pbf_fetch_data
         inc     al
         mov     [bx], al
         jmp     bf_rlp
 nextbf0:
         cmp     al, '-'         ; DECREMENT
         jnz     nextbf1
-        call    Lbf_fetch_data
+        call    Pbf_fetch_data
         dec     al
         mov     [bx], al
         jmp     bf_rlp
@@ -192,20 +182,20 @@ nextbf2:
 nextbf3:        
         cmp     al, '.'         ; OUTPUT CHARACTER
         jnz     nextbf4
-        call    Lbf_fetch_data
-        call    Lputch
+        call    Pbf_fetch_data
+        call    Pputch
         jmp     bf_rlp
 nextbf4:        
         cmp     al, ','         ; INPUT CHARACTER
         jnz     nextbf5
         mov     bx, dx
-        call    Lgetchar
+        call    Pgetchar
         mov     [bx], al
         jmp     bf_rlp
 nextbf5:        
         cmp     al, '['         ; LOOP
         jnz     nextbf6
-        call    Lbf_fetch_data
+        call    Pbf_fetch_data
         or      al, al
         jnz     bf_rlp
         push    dx
@@ -214,7 +204,7 @@ lpbgn:
         or      dx, dx
         jz      lpbgn_end
         inc     cx
-        call    Lbf_fetch_cmd
+        call    Pbf_fetch_cmd
         cmp     al, '['
         jnz     nextlp0
         inc     dx
@@ -230,7 +220,7 @@ lpbgn_end:
 nextbf6:        
         cmp     al, ']'         ; END OF LOOP
         jnz     nextbf7
-        call    Lbf_fetch_data
+        call    Pbf_fetch_data
         or      al, al
         jz      bf_rlp
         push    dx
@@ -239,7 +229,7 @@ lpend:
         or      dx, dx
         jz      lpend_end
         dec     cx
-        call    Lbf_fetch_cmd
+        call    Pbf_fetch_cmd
         cmp     al, '['
         jnz     nextlp1
         dec     dx
@@ -255,7 +245,7 @@ lpend_end:
 nextbf7:
         or      al, al          ; stop the program at 0
         jnz     bf_rlp
-        ret
+        jmp     Lprompt
 
 
 times   510 - ($-$$) db 0
