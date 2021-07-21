@@ -80,6 +80,15 @@ Lclrscr:
         pop     ax
         ret
 
+
+Lnewline:
+        mov     al, 13          ; go to new line
+        call    Lputch
+        mov     al, 10
+        call    Lputch
+        ret
+
+
 ;; Brainfuck functions
 
 BF_I equ 0x8000
@@ -99,10 +108,7 @@ Lbf_fetch_data:
 
 
 Lbf_edit:
-        mov     al, 13          ; go to new line
-        call    Lputch
-        mov     al, 10
-        call    Lputch
+        call    Lnewline
         mov     bx, BF_I        ; initiate char counter
 bf_elp:
         call    Lgetchar        ; read key
@@ -122,10 +128,7 @@ bf_ert:
 
 
 Lbf_run:
-        mov     al, 13          ; go to new line
-        call    Lputch
-        mov     al, 10
-        call    Lputch
+        call    Lnewline
         mov     cx, BF_I        ; instruction pointer
         mov     dx, BF_P        ; data pointer
         dec     cx
