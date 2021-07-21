@@ -190,6 +190,8 @@ nextbf4:
         jnz     nextbf5
         mov     bx, dx
         call    Pgetchar
+        cmp     al, 27          ; handle Escape key to break
+        jz      Lprompt
         mov     [bx], al
         jmp     bf_rlp
 nextbf5:        
