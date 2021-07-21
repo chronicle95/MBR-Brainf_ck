@@ -2,8 +2,9 @@ org     0x7c00
         jmp Lstart
 
 msg_info:   db "Brainf_ck!", 13, 10, 13, 10
-            db " * 'e' - type code in", 13, 10
-            db " * 'r' - run", 13, 10, 0
+            db " * e - edit pgm", 13, 10
+            db " * x - execute", 13, 10
+            db " * r - reset", 13, 10, 0
 msg_req:    db 13, 10, "> ", 0
 msg_error:  db 13, "?", 0
 
@@ -23,12 +24,16 @@ loop:
         call    Lbf_edit
         jmp     loop
 nextcmd0:
-        cmp     al, 'r'
+        cmp     al, 'x'
         jnz     nextcmd1
         ; run command
         call    Lbf_run
         jmp     loop
 nextcmd1:
+        cmp     al, 'r'
+        jnz     nextcmd2
+        jmp     Lstart
+nextcmd2:
         cmp     al, 13
         jz      loop
         mov     ax, msg_error
