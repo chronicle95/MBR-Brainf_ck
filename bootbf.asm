@@ -12,9 +12,11 @@ msg_error:  db 13, "?", 0
 
 ;; Entry point
 Lstart:
-        call    Pclrscr
+        mov     ax, 0x0002    ; set mode 80x25 and clear screen
+        int     0x10
         mov     ax, msg_info
         call    Pputs
+        mov     di, '0'       ; use DI as program selector here
 Lprompt:
         mov     ax, msg_req
         call    Pputs
@@ -34,7 +36,15 @@ Lprompt:
 ; pressing enter does nothing
         cmp     al, 13
         jz      Lprompt
+; 0-9 selects program
+        cmp     al, '0'
+        jl      unknown_command
+        cmp     al, '9'
+        jg      unknown_command
+        mov     di, ax
+        jmp     Lprompt
 ; handle unknown command
+unknown_command:
         mov     ax, msg_error
         call    Pputs
         jmp     Lprompt
@@ -66,14 +76,6 @@ puts_ret:
         ret
 
 
-Pclrscr:
-        push    ax
-        mov     ax, 0x0002      ; set mode 80x25 and clear screen
-        int     0x10
-        pop     ax
-        ret
-
-
 Pnewline:
         mov     al, 13          ; go to new line
         call    Pputch
@@ -84,8 +86,11 @@ Pnewline:
 
 ;; Brainfuck functions
 
+BF_PGCNT equ 10
+BF_PGSZ  equ 0x400
+
 BF_I equ 0x8000
-BF_P equ 0x9000
+BF_P equ BF_I+(BF_PGCNT*BF_PGSZ)
 
 
 Pbf_fetch_cmd:
@@ -100,9 +105,22 @@ Pbf_fetch_data:
         ret
 
 
+Pbf_calc_pgma:
+        push    dx              ; save memory pointer before MUL
+        sub     al, '0'         ; calculate new instruction pointer
+        xor     ah, ah
+        mov     cx, BF_PGSZ
+        mul     cx
+        add     ax, BF_I
+        pop     dx              ; restore memory pointer
+        ret
+
+
 Lbf_edit:
         call    Pnewline
-        mov     bx, BF_I        ; initiate char counter
+        mov     ax, di          ; initiate char pointer
+        call    Pbf_calc_pgma
+        mov     bx, ax
 bf_elp:
         call    Pgetchar        ; read key
         cmp     al, 13          ; if it is enter then quit
@@ -122,23 +140,27 @@ bf_ert:
 
 Lbf_view:
         call    Pnewline
-        mov     cx, BF_I
+        mov     ax, di          ; initiate char pointer
+        call    Pbf_calc_pgma
+        mov     bx, ax
 view_loop:
-        call    Pbf_fetch_cmd
+        mov     al, [bx]
         or      al, al
-        jz      view_end
+        jz      Lprompt         ; when EOF reached, just go back to prompt
         call    Pputch
-        inc     cx
+        inc     bx
         jmp     view_loop
-view_end:
-        jmp     Lprompt
 
 
 Lbf_run:
         call    Pnewline
-        mov     cx, BF_I        ; instruction pointer
+        mov     ax, di          ; get instruction pointer from pgm number
         mov     dx, BF_P        ; data pointer
         mov     bp, dx          ; secondary data pointer
+        mov     di, 0           ; use DI as call depth counter here
+bf_subrc:
+        call    Pbf_calc_pgma   ; calculate program's instruction pointer
+        mov     cx, ax
         dec     cx
 bf_rlp:
         mov     ah, 0x01        ; get key status
@@ -255,9 +277,21 @@ nextbf8:
         mov     [bp], al
         jmp     bf_rlp
 nextbf9:
-        or      al, al          ; stop the program at 0
+        cmp     al, '0'         ; CALL ANOTHER PROGRAM
+        jl      nextbf10
+        cmp     al, '9'
+        jg      nextbf10
+        push    cx              ; save current instruction pointer
+        inc     di              ; increment call depth
+        jmp     bf_subrc
+nextbf10:
+        or      al, al          ; stop/return the program at 0
         jnz     bf_rlp
-        jmp     Lprompt
+        or      di, di          ; do we need to return?
+        jz      Lprompt         ; no, just exit to prompt
+        dec     di              ; return from call
+        pop     cx
+        jmp     bf_rlp
 
 
 times   510 - ($-$$) db 0
