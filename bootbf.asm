@@ -2,10 +2,10 @@ org     0x7c00
         jmp Lstart
 
 msg_info:   db "Brainf_ck!", 13, 10, 13, 10
-            db " * e - edit pgm", 13, 10
-            db " * v - view pgm", 13, 10
-            db " * x - execute", 13, 10
-            db " * r - reset", 13, 10, 0
+            db "* E~dit", 13, 10
+            db "* V~iew", 13, 10
+            db "* R~un", 13, 10
+            db "* C~lear", 13, 10, 0
 msg_req:    db 13, 10, "> ", 0
 msg_error:  db 13, "?", 0
 
@@ -25,11 +25,11 @@ Lprompt:
 ; view command
         cmp     al, 'v'
         jz      Lbf_view
-; execute command
-        cmp     al, 'x'
-        jz      Lbf_run
-; reset screen command
+; run command
         cmp     al, 'r'
+        jz      Lbf_run
+; clear screen command
+        cmp     al, 'c'
         jz      Lstart
 ; pressing enter does nothing
         cmp     al, 13
@@ -42,14 +42,9 @@ Lprompt:
 ;; Some I/O functions
 
 Pgetchar:
-        call    Pgetch
-        call    Pputch
-        ret
-
-
-Pgetch:
         mov     ah, 0x00        ; read a key
         int     0x16
+        call    Pputch
         ret
 
 
