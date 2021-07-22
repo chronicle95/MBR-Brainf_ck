@@ -176,46 +176,69 @@ cont_rlp:
         inc     cx
         call    Pbf_fetch_cmd
         cmp     al, '+'         ; INCREMENT
-        jnz     nextbf0
+        jz      bf_cmd_inc
+        cmp     al, '-'         ; DECREMENT
+        jz      bf_cmd_dec
+        cmp     al, '>'         ; NEXT CELL
+        jz      bf_cmd_next
+        cmp     al, '<'         ; PREVIOUS CELL
+        jz      bf_cmd_prev
+        cmp     al, '.'         ; OUTPUT CHARACTER
+        jz      bf_cmd_put
+        cmp     al, ','         ; INPUT CHARACTER
+        jz      bf_cmd_get
+        cmp     al, '['         ; LOOP
+        jz      bf_cmd_loop
+        cmp     al, ']'         ; END OF LOOP
+        jz      bf_cmd_endl
+        cmp     al, '%'         ; SWAP POINTERS
+        jz      bf_cmd_swap
+        cmp     al, '^'         ; COPY TO SECONDARY POINTER
+        jz      bf_cmd_copy
+        cmp     al, '0'         ; CALL ANOTHER PROGRAM
+        jl      bf_cmd_unknown
+        cmp     al, '9'
+        jg      bf_cmd_unknown
+        push    cx              ; save current instruction pointer
+        inc     di              ; increment call depth
+        jmp     bf_subrc
+
+bf_cmd_unknown:
+        or      al, al          ; stop/return the program at 0
+        jnz     bf_rlp
+        or      di, di          ; do we need to return?
+        jz      Lprompt         ; no, just exit to prompt
+        dec     di              ; return from call
+        pop     cx
+        jmp     bf_rlp
+bf_cmd_inc:
         call    Pbf_fetch_data
         inc     al
         mov     [bx], al
         jmp     bf_rlp
-nextbf0:
-        cmp     al, '-'         ; DECREMENT
-        jnz     nextbf1
+bf_cmd_dec:
         call    Pbf_fetch_data
         dec     al
         mov     [bx], al
         jmp     bf_rlp
-nextbf1:        
-        cmp     al, '>'         ; NEXT CELL
-        jnz     nextbf2
+bf_cmd_next:
         inc     dx
         jmp     bf_rlp
-nextbf2:        
-        cmp     al, '<'         ; PREVIOUS CELL
-        jnz     nextbf3
+bf_cmd_prev:
         dec     dx
         jmp     bf_rlp
-nextbf3:        
-        cmp     al, '.'         ; OUTPUT CHARACTER
-        jnz     nextbf4
+bf_cmd_put:
         call    Pbf_fetch_data
         call    Pputchar
         jmp     bf_rlp
-nextbf4:        
-        cmp     al, ','         ; INPUT CHARACTER
-        jnz     nextbf5
+bf_cmd_get:
         mov     bx, dx
         call    Pgetchar
         cmp     al, 27          ; handle Escape key to break
         jz      Lprompt
         mov     [bx], al
         jmp     bf_rlp
-nextbf5:        
-        cmp     al, '['         ; LOOP
-        jnz     nextbf6
+bf_cmd_loop:
         call    Pbf_fetch_data
         or      al, al
         jnz     bf_rlp
@@ -238,9 +261,7 @@ nextlp0:
 lpbgn_end:
         pop     dx
         jmp     bf_rlp
-nextbf6:        
-        cmp     al, ']'         ; END OF LOOP
-        jnz     nextbf7
+bf_cmd_endl:
         call    Pbf_fetch_data
         or      al, al
         jz      bf_rlp
@@ -263,35 +284,15 @@ nextlp1:
 lpend_end:
         pop     dx
         jmp     bf_rlp
-nextbf7:
-        cmp     al, '%'         ; SWAP POINTERS
-        jnz     nextbf8
+bf_cmd_swap:
         mov     bx, dx          ; use bx as temp
         mov     dx, bp
         mov     bp, bx
         jmp     bf_rlp
-nextbf8:
-        cmp     al, '^'         ; COPY TO SECONDARY POINTER
-        jnz     nextbf9
+bf_cmd_copy:
         mov     bx, dx          ; use bx as temp
         mov     al, [bx]
         mov     [bp], al
-        jmp     bf_rlp
-nextbf9:
-        cmp     al, '0'         ; CALL ANOTHER PROGRAM
-        jl      nextbf10
-        cmp     al, '9'
-        jg      nextbf10
-        push    cx              ; save current instruction pointer
-        inc     di              ; increment call depth
-        jmp     bf_subrc
-nextbf10:
-        or      al, al          ; stop/return the program at 0
-        jnz     bf_rlp
-        or      di, di          ; do we need to return?
-        jz      Lprompt         ; no, just exit to prompt
-        dec     di              ; return from call
-        pop     cx
         jmp     bf_rlp
 
 
