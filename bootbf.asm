@@ -1,12 +1,12 @@
 org     0x7c00
         jmp Lstart
 
-msg_info:   db "Brainf_ck!", 13, 10, 13, 10
-            db "* E~dit", 13, 10
-            db "* V~iew", 13, 10
-            db "* R~un", 13, 10
-            db "* C~lear", 13, 10, 0
-msg_req:    db 13, 10, "> ", 0
+msg_info:   db "Brainf_ck!", 10, 10
+            db "* E~dit", 10
+            db "* V~iew", 10
+            db "* R~un", 10
+            db "* C~lear", 10, 0
+msg_req:    db 10, "> ", 0
 msg_error:  db 13, "?", 0
 
 
@@ -34,7 +34,7 @@ Lprompt:
         cmp     al, 'c'
         jz      Lstart
 ; pressing enter does nothing
-        cmp     al, 13
+        cmp     al, 10
         jz      Lprompt
 ; 0-9 selects program
         cmp     al, '0'
@@ -54,12 +54,18 @@ unknown_command:
 Pgetchar:
         mov     ah, 0x00        ; read a key
         int     0x16
-        call    Pputch
+        cmp     al, 13          ; yield LF when enter is pressed
+        jnz     skip_lf
+        mov     al, 10
+skip_lf:
+        call    Pputchar
         ret
 
 
-Pputch:
-        mov     ah, 0x0e
+Pputchar:
+        mov     ah, 0x0e        ; teletype output command
+        cmp     al, 10          ; LF causes CR+LF
+        jz      Pnewline
         int     0x10
         ret
 
@@ -70,17 +76,18 @@ puts_lp:
         lodsb                   ; AL <- [DS:SI] && SI++
         or      al, al          ; end of string?
         jz      puts_ret
-        call    Pputch
+        call    Pputchar
         jmp     puts_lp         ; next char
 puts_ret:
         ret
 
 
 Pnewline:
-        mov     al, 13          ; go to new line
-        call    Pputch
-        mov     al, 10
-        call    Pputch
+        mov     ah, 0x0e        ; print char to teletype
+        mov     al, 13          ; print CR
+        int     0x10
+        mov     al, 10          ; print LF
+        int     0x10
         ret
 
 
@@ -123,7 +130,7 @@ Lbf_edit:
         mov     bx, ax
 bf_elp:
         call    Pgetchar        ; read key
-        cmp     al, 13          ; if it is enter then quit
+        cmp     al, 10          ; if it is enter then quit
         jz      bf_ert
         cmp     al, 8           ; if backspace then
         jnz     bf_nbs
@@ -142,14 +149,8 @@ Lbf_view:
         call    Pnewline
         mov     ax, di          ; initiate char pointer
         call    Pbf_calc_pgma
-        mov     bx, ax
-view_loop:
-        mov     al, [bx]
-        or      al, al
-        jz      Lprompt         ; when EOF reached, just go back to prompt
-        call    Pputch
-        inc     bx
-        jmp     view_loop
+        call    Pputs
+        jmp     Lprompt
 
 
 Lbf_run:
@@ -201,7 +202,7 @@ nextbf3:
         cmp     al, '.'         ; OUTPUT CHARACTER
         jnz     nextbf4
         call    Pbf_fetch_data
-        call    Pputch
+        call    Pputchar
         jmp     bf_rlp
 nextbf4:        
         cmp     al, ','         ; INPUT CHARACTER
