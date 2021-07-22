@@ -6,8 +6,8 @@ msg_info:   db "Brainf_ck!", 10, 10
             db "* V~iew", 10
             db "* R~un", 10
             db "* C~lear", 10, 0
-msg_req:    db 10, "> ", 0
-msg_error:  db 13, "?", 0
+msg_req:    db "> ", 0
+msg_error:  db 10, "?", 0
 
 
 ;; Entry point
@@ -17,6 +17,8 @@ Lstart:
         mov     ax, msg_info
         call    Pputs
         mov     di, '0'       ; use DI as program selector here
+Lpromptl:
+        call    Pnewline
 Lprompt:
         mov     ax, msg_req
         call    Pputs
@@ -42,7 +44,7 @@ Lprompt:
         cmp     al, '9'
         jg      unknown_command
         mov     di, ax
-        jmp     Lprompt
+        jmp     Lpromptl
 ; handle unknown command
 unknown_command:
         mov     ax, msg_error
@@ -130,8 +132,6 @@ Lbf_edit:
         mov     bx, ax
 bf_elp:
         call    Pgetchar        ; read key
-        cmp     al, 10          ; if it is enter then quit
-        jz      bf_ert
         cmp     al, 8           ; if backspace then
         jnz     bf_nbs
         dec     bx              ; decrement the counter
@@ -139,10 +139,10 @@ bf_elp:
 bf_nbs:
         mov     [bx], al        ; otherwise write to memory
         inc     bx              ; and increment the counter
-        jmp     bf_elp
-bf_ert:
-        mov     byte [bx], 0    ; set last byte to 0
-        jmp     Lprompt
+        cmp     al, 10          ; was it LF?
+        jnz     bf_elp          ; no, continue reading
+        mov     byte [bx], 0    ; yes, set last byte to 0
+        jmp     Lprompt         ; and back to prompt
 
 
 Lbf_view:
@@ -207,7 +207,7 @@ bf_cmd_unknown:
         or      al, al          ; stop/return the program at 0
         jnz     bf_rlp
         or      di, di          ; do we need to return?
-        jz      Lprompt         ; no, just exit to prompt
+        jz      Lpromptl        ; no, just exit to prompt
         dec     di              ; return from call
         pop     cx
         jmp     bf_rlp
