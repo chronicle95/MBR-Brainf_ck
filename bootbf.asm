@@ -2,8 +2,8 @@ org     0x7c00
         jmp Lstart
 
 msg_info:   db "Brainf_ck!", 10, 10
+            db "* 0-9 Sel", 10
             db "* E~dit", 10
-            db "* V~iew", 10
             db "* R~un", 10
             db "* C~lear", 10, 0
 msg_req:    db "> ", 0
@@ -26,9 +26,6 @@ Lprompt:
 ; edit command
         cmp     al, 'e'
         jz      Lbf_edit
-; view command
-        cmp     al, 'v'
-        jz      Lbf_view
 ; run command
         cmp     al, 'r'
         jz      Lbf_run
@@ -38,13 +35,13 @@ Lprompt:
 ; pressing enter does nothing
         cmp     al, 10
         jz      Lprompt
-; 0-9 selects program
+; 0-9 selects and displays a program
         cmp     al, '0'
         jl      unknown_command
         cmp     al, '9'
         jg      unknown_command
         mov     di, ax
-        jmp     Lpromptl
+        jmp     Lbf_view
 ; handle unknown command
 unknown_command:
         mov     ax, msg_error
