@@ -233,6 +233,7 @@ cont_rlp:
         jl      bf_cmd_unknown
         cmp     al, '9'
         jg      bf_cmd_unknown
+        sub     al, '0'         ; subtract '0' ASCII code to get plain index
         push    cx              ; save current instruction pointer
         inc     di              ; increment call depth
         jmp     bf_subrc
