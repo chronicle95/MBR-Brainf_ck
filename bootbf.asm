@@ -51,6 +51,12 @@ unknown_command:
 
 ;; Some I/O functions
 
+
+; Pgetchar: reads character from keyboard.
+;
+; @result  AL  character code
+;
+; If enter key was pressed, reads as LF and prints out CR + LF codes.
 Pgetchar:
         mov     ah, 0x00        ; read a key
         int     0x16
@@ -62,6 +68,11 @@ skip_lf:
         ret
 
 
+; Pputchar: prints character to the screen in teletype mode.
+;
+; @input   AL  character code
+;
+; If LF is supplied, CR + LF gets printed out.
 Pputchar:
         mov     ah, 0x0e        ; teletype output command
         cmp     al, 10          ; LF causes CR+LF
@@ -70,6 +81,9 @@ Pputchar:
         ret
 
 
+; Pputs: prints a null-terminated string to the screen
+;
+; @input   AX  offset to a buffer
 Pputs:
         mov     si, ax
 puts_lp:
@@ -82,6 +96,9 @@ puts_ret:
         ret
 
 
+; Pnewline: prints a newline to the screen.
+;
+; Yields CR + LF combination in teletype mode.
 Pnewline:
         mov     ah, 0x0e        ; print char to teletype
         mov     al, 13          ; print CR
