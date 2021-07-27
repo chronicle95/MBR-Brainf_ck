@@ -16,7 +16,7 @@ Lstart:
         int     0x10
         mov     ax, msg_info
         call    Pputs
-        mov     di, '0'       ; use DI as program selector here
+        mov     di, 0         ; use DI as program selector here
 Lpromptl:
         call    Pnewline
 Lprompt:
@@ -40,6 +40,7 @@ Lprompt:
         jl      unknown_command
         cmp     al, '9'
         jg      unknown_command
+        sub     al, '0'
         mov     di, ax
         jmp     Lbf_view
 ; handle unknown command
@@ -112,13 +113,12 @@ Pbf_fetch_data:
 
 
 Pbf_calc_pgma:
-        push    dx              ; save memory pointer before MUL
-        sub     al, '0'         ; calculate new instruction pointer
+        push    dx              ; save memory pointer because MUL changes dx
         xor     ah, ah
         mov     cx, BF_PGSZ
-        mul     cx
-        add     ax, BF_I
-        pop     dx              ; restore memory pointer
+        mul     cx              ; multiply pgm index by pgm size
+        add     ax, BF_I        ; add program memory offset
+        pop     dx
         ret
 
 
