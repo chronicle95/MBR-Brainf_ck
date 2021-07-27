@@ -9,18 +9,25 @@ msg_info:   db "Brainf_ck!", 10, 10
 msg_req:    db "> ", 0
 msg_error:  db 10, "?", 0
 
+COLOR_GRAY   equ 0x07
+COLOR_RED    equ 0x0c
+COLOR_GREEN  equ 0x0a
+COLOR_BLUE   equ 0x09
+COLOR_WHITE  equ 0x0f
 
 ;; Entry point
 Lstart:
         mov     ax, 0x0002    ; set mode 80x25 and clear screen
         int     0x10
         mov     ax, msg_info
+        mov     bl, COLOR_BLUE
         call    Pputs
         mov     di, 0         ; use DI as program selector here
 Lpromptl:
         call    Pnewline
 Lprompt:
         mov     ax, msg_req
+        mov     bl, COLOR_WHITE
         call    Pputs
         call    Pgetchar
 ; edit command
@@ -46,6 +53,7 @@ Lprompt:
 ; handle unknown command
 unknown_command:
         mov     ax, msg_error
+        mov     bl, COLOR_RED
         call    Pputs
         jmp     Lprompt
 
@@ -71,12 +79,19 @@ skip_lf:
 ; Pputchar: prints character to the screen in teletype mode.
 ;
 ; @input   AL  character code
+; @input   BL  color of the text
 ;
 ; If LF is supplied, CR + LF gets printed out.
 Pputchar:
-        mov     ah, 0x0e        ; teletype output command
         cmp     al, 10          ; LF causes CR+LF
         jz      Pnewline
+        pusha
+        mov     cx, 1           ; we only need to set attributes for 1 chr
+        mov     bh, 0           ; default to page 0
+        mov     ax, 0x0920      ; set attributes and char at cursor position
+        int     0x10            ; call it
+        popa
+        mov     ah, 0x0e        ; teletype output command
         int     0x10
         ret
 
@@ -84,6 +99,7 @@ Pputchar:
 ; Pputs: prints a null-terminated string to the screen
 ;
 ; @input   AX  offset to a buffer
+; @input   BL  color of the text
 Pputs:
         mov     si, ax
 puts_lp:
@@ -145,7 +161,10 @@ Lbf_edit:
         call    Pbf_calc_pgma
         mov     bx, ax
 bf_elp:
+        push    bx
+        mov     bl, COLOR_GREEN
         call    Pgetchar        ; read key
+        pop     bx
         cmp     al, 8           ; if backspace then
         jnz     bf_nbs
         dec     bx              ; decrement the counter
@@ -163,6 +182,7 @@ Lbf_view:
         call    Pnewline
         mov     ax, di          ; initiate char pointer
         call    Pbf_calc_pgma
+        mov     bl, COLOR_BLUE
         call    Pputs
         jmp     Lprompt
 
@@ -243,11 +263,13 @@ bf_cmd_prev:
         jmp     bf_rlp
 bf_cmd_put:
         call    Pbf_fetch_data
+        mov     bl, COLOR_GRAY
         call    Pputchar
         jmp     bf_rlp
 bf_cmd_get:
-        mov     bx, dx
+        mov     bl, COLOR_WHITE
         call    Pgetchar
+        mov     bx, dx
         cmp     al, 27          ; handle Escape key to break
         jz      Lprompt
         mov     [bx], al
