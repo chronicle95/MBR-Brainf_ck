@@ -237,9 +237,12 @@ bf_cmd_get:
         jmp     bf_rlp
 bf_cmd_loop:
         call    Pbf_fetch_data
-        or      al, al
-        jnz     bf_rlp
-        push    dx
+        or      al, al           ; is cell value a zero?
+        jz      lpinit           ; yes, skip the loop
+        push    cx               ; no, save current IP and enter the loop
+        jmp     bf_rlp
+lpinit:
+        push    dx               ; save data pointer and use as counter
         mov     dx, 1
 lpbgn:
         or      dx, dx
@@ -256,30 +259,16 @@ nextlp0:
         dec     dx
         jmp     lpbgn
 lpbgn_end:
-        pop     dx
+        pop     dx               ; restore data pointer
         jmp     bf_rlp
 bf_cmd_endl:
         call    Pbf_fetch_data
-        or      al, al
-        jz      bf_rlp
-        push    dx
-        mov     dx, 1
-lpend:
-        or      dx, dx
-        jz      lpend_end
-        dec     cx
-        call    Pbf_fetch_cmd
-        cmp     al, '['
-        jnz     nextlp1
-        dec     dx
-        jmp     lpend
-nextlp1:
-        cmp     al, ']'
-        jnz     lpend
-        inc     dx
-        jmp     lpend
-lpend_end:
-        pop     dx
+        or      al, al           ; is cell value a zero?
+        jnz     lpcont           ; no, jump to continuation
+        add     sp, 2            ; yes, drop the saved IP and go on
+        jmp     bf_rlp
+lpcont:
+        mov     cx, [esp]        ; restore IP and keep looping
         jmp     bf_rlp
 bf_cmd_swap:
         mov     bx, dx          ; use bx as temp
