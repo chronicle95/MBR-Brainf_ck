@@ -1,6 +1,6 @@
 ## About
 
-This is a simple Brainf\*ck interpreter made for playing around with X86 assembly. It fits completely into the 512 byte boot sector.
+This is a simple [Brainf\*ck](https://en.wikipedia.org/wiki/Brainfuck) interpreter made for playing around with X86 assembly. It fits completely into the 512 byte boot sector.
 
 Command line interface supports typing in up to 10 individual programs (1 KiB each).
 
@@ -31,15 +31,13 @@ The interpreter itself does supply a bit of help on startup.
 
 ### Edit program
 
-Press key 0 to 9 to select current program.
+Press key 0 to 9 to select current program. Program's text is going to be displayed on the screen.
 
 Press `e` to type in the code. When you are done entering the program, press `Enter` key.
 
-Press `v` to view/verify what you've just typed.
+Use backspace to correct the code.
 
-Use backspace to correct the code. It will not erase the characters visually, but they are replaced in the buffer.
-
-If you issue the `e` command again, it will overwrite the previous code.
+If you issue the `e` command again, it will overwrite the previous code (in the selected program only).
 
 When the screen becomes too polluted, use `c` command to clear it. The program will be defauled to 0.
 
@@ -55,7 +53,9 @@ The memory may initially contain garbage so keep this in mind when designing BF 
 
 Halt the program at any point by pressing `Escape`.
 
-*Note: any user input during the execution can not be corrected with Backspace.*
+*Note: any user input during the execution can not be corrected with Backspace, i.e. is not buffered.*
+
+When back at the prompt, the selected program is 0 by default.
 
 ### Dialect differences
 
